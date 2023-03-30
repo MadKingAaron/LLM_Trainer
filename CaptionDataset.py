@@ -6,6 +6,8 @@ from torch.utils.data import Dataset, DataLoader
 from transformers import AutoTokenizer#T5Tokenizer
 from sklearn.model_selection import train_test_split
 
+import datasets
+
 
 class CaptionDataset(Dataset):
     def __init__(self, tokenizer, caption_df:pd.DataFrame, task_prefix:str, prepend_prefix:bool = True) -> None:
@@ -93,6 +95,31 @@ def get_loaders(tokenizer, task_prefix:str, prepend_prefix:bool, df:pd.DataFrame
     testloader = get_individual_loader(tokenizer, task_prefix, prepend_prefix, test_df, test_batch)
 
     return trainloader, valloader, testloader
+
+
+def tokenize_func(examples, tokenizer, prefix:str = 'Predict next step in the sequence:\n'):
+    inputs = [prefix+str(x) for x in examples['input']]
+    labels = [x for x in examples['label']]
+
+    model_inputs = tokenizer(inputs, text_target=labels, max_length=512, truncation=True)
+    return model_inputs
+
+def get_hf_ds(data_type:str = 'csv', data_files = {'train':'./yc2_captions/test.csv', 'test':'./yc2_captions/test.csv', 'validation':'./yc2_captions/val.csv'}):
+    dataset = datasets.load_dataset('csv', data_files=data_files)
+    return dataset
+
+def tokenize_ds(dataset, tokenizer, deep_copy:bool=False):
+    preproc_func = lambda x: tokenize_func(x, tokenizer)
+    if deep_copy:
+        import copy
+        dataset = copy.deepcopy(dataset)
+    
+    for key in dataset.keys():
+        dataset[key] = dataset[key].map(preproc_func, batched=True, remove_columns=dataset[key].column_names)
+    
+    return dataset
+    
+
 
 
 
