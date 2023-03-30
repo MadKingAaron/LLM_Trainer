@@ -134,10 +134,10 @@ def train_model_hf(optimizer, trainloader:LoaderWrapper, valloader:LoaderWrapper
     writer = SummaryWriter(comment=tb_comment)
     for epoch in tqdm(range(epochs)):
         model.train()
-        print('Epoch %d' %(epoch+1))
+        #print('Epoch %d' %(epoch+1))
         for i, data in enumerate(trainloader, 0):
             # Get inputs and labels
-            inputs, attention_mask, labels = data
+            inputs, attention_mask, labels = data['input_ids'], data['attention_mask'], data['labels']
             inputs, attention_mask, labels = inputs.to(device), attention_mask.to(device), labels.to(device)
 
             # Zero grad
@@ -183,9 +183,10 @@ def validate_model_hf(model, valloader:LoaderWrapper, device = 'cpu'):
     i = 0
     #model.eval()
     with torch.no_grad():
-        for inputs, attention_mask, labels in valloader:
+        for data in valloader:
             i += 1   
             # Get inputs and labels
+            inputs, attention_mask, labels = data['input_ids'], data['attention_mask'], data['labels']
             inputs, attention_mask, labels = inputs.to(device), attention_mask.to(device), labels.to(device)
             #print(labels.shape)
             outputs = model(input_ids=inputs, attention_mask=attention_mask, labels=labels)
