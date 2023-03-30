@@ -18,18 +18,17 @@ def get_optimzer(initial_lr:float, model:nn.Module):
     return optimizer, scheduler
 
 
-
+def save_checkpoint(checkpt_name:str,  model:nn.Module):
+    model.save_pretrained('./checkpoints/'+checkpt_name)
 
 def train_model(optimizer, accelerator:Accelerator, trainloader:LoaderWrapper, valloader:LoaderWrapper, model:nn.Module, epochs:int = 50, scheduler = None, device = 'cpu', tb_comment = ""):
     running_loss = 0.0
     writer = SummaryWriter(comment=tb_comment)
-    for epoch in range(epochs):
+    for epoch in tqdm(range(epochs)):
         model.train()
         print('Epoch %d' %(epoch+1))
-        for i, data in enumerate(tqdm(trainloader()), 0):
-            # Get inputs and labels
+        for i, data in enumerate(trainloader, 0):
             inputs, attention_mask, labels = data
-            inputs, attention_mask, labels = inputs.to(device), attention_mask.to(device), labels.to(device)
 
             # Zero grad
             optimizer.zero_grad()
@@ -41,7 +40,8 @@ def train_model(optimizer, accelerator:Accelerator, trainloader:LoaderWrapper, v
 
             
             loss = outputs.loss
-            loss.backward()
+            #loss.backward()
+            accelerator.backward(loss)
             optimizer.step()
 
 
@@ -57,6 +57,10 @@ def train_model(optimizer, accelerator:Accelerator, trainloader:LoaderWrapper, v
         writer.add_scalar("Val/Loss", val_loss, epoch)
         writer.add_scalar("Train/Loss", running_loss/(i+1), epoch)
 
+        if (epoch+1) % 5 == 0:
+            save_checkpoint(checkpt_name='checkpt_epoch_'+str(epoch+1), model=model)
+
+
         if scheduler is not None:
             scheduler.step(val_loss)
         running_loss = 0.0
@@ -70,10 +74,8 @@ def validate_model(model, valloader:LoaderWrapper, device = 'cpu'):
     i = 0
     #model.eval()
     with torch.no_grad():
-        for inputs, attention_mask, labels in valloader():
+        for inputs, attention_mask, labels in valloader:
             i += 1   
-            # Get inputs and labels
-            inputs, attention_mask, labels = inputs.to(device), attention_mask.to(device), labels.to(device)
             #print(labels.shape)
             outputs = model(input_ids=inputs, attention_mask=attention_mask, labels=labels)
 

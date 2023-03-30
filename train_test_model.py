@@ -22,7 +22,8 @@ def get_optimzer(initial_lr:float, model:nn.Module):
 
     return optimizer, scheduler
 
-
+def save_checkpoint(checkpt_name:str,  model:nn.Module):
+    model.save_pretrained('./checkpoints/'+checkpt_name)
 
 
 def train_model(optimizer, trainloader:LoaderWrapper, valloader:LoaderWrapper, model:nn.Module, epochs:int = 50, scheduler = None, device = 'cpu', tb_comment = ""):
@@ -61,6 +62,10 @@ def train_model(optimizer, trainloader:LoaderWrapper, valloader:LoaderWrapper, m
         val_loss = validate_model(model, valloader, device)
         writer.add_scalar("Val/Loss", val_loss, epoch)
         writer.add_scalar("Train/Loss", running_loss/(i+1), epoch)
+
+
+        if (epoch + 1) % 5 == 0:
+            save_checkpoint(checkpt_name='checkpt_epoch_'+str(epoch+1), model=model)
 
         if scheduler is not None:
             scheduler.step(val_loss)
@@ -122,3 +127,72 @@ def test_model(model, testloader, transformer_model:bool = False,  device = 'cpu
             i+=1
     report = classification_report(y_true=total_labels, y_pred=total_preds)
     print(report)
+
+
+def train_model_hf(optimizer, trainloader:LoaderWrapper, valloader:LoaderWrapper, model:nn.Module, epochs:int = 50, scheduler = None, device = 'cpu', tb_comment = ""):
+    running_loss = 0.0
+    writer = SummaryWriter(comment=tb_comment)
+    for epoch in tqdm(range(epochs)):
+        model.train()
+        print('Epoch %d' %(epoch+1))
+        for i, data in enumerate(trainloader, 0):
+            # Get inputs and labels
+            inputs, attention_mask, labels = data
+            inputs, attention_mask, labels = inputs.to(device), attention_mask.to(device), labels.to(device)
+
+            # Zero grad
+            optimizer.zero_grad()
+
+
+            # Forward + Backprop
+            outputs = model(input_ids=inputs, attention_mask=attention_mask, labels=labels)
+            #print('Shape:', outputs.shape)
+
+            
+            loss = outputs.loss
+            loss.backward()
+            optimizer.step()
+
+
+            # Print current stats
+            running_loss += loss.item()
+            if i % 2000 == 1999:    # print every 2000 mini-batches
+                print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
+                running_loss = 0.0
+        
+        # Get validation accuracy and loss
+        #print(labels.shape)
+        val_loss = validate_model_hf(model, valloader, device)
+        writer.add_scalar("Val/Loss", val_loss, epoch)
+        writer.add_scalar("Train/Loss", running_loss/(i+1), epoch)
+
+
+        if (epoch + 1) % 5 == 0:
+            save_checkpoint(checkpt_name='checkpt_epoch_'+str(epoch+1), model=model)
+
+        if scheduler is not None:
+            scheduler.step(val_loss)
+        running_loss = 0.0
+    writer.close()
+    return model
+
+def validate_model_hf(model, valloader:LoaderWrapper, device = 'cpu'):
+    correct = 0
+    total = 0
+    total_loss = 0.0
+    i = 0
+    #model.eval()
+    with torch.no_grad():
+        for inputs, attention_mask, labels in valloader:
+            i += 1   
+            # Get inputs and labels
+            inputs, attention_mask, labels = inputs.to(device), attention_mask.to(device), labels.to(device)
+            #print(labels.shape)
+            outputs = model(input_ids=inputs, attention_mask=attention_mask, labels=labels)
+
+            #print(outputs)
+            # Calc loss
+            loss = outputs.loss
+            total_loss += loss.item()
+
+    return (total_loss/i)
