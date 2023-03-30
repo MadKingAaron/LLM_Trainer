@@ -3,7 +3,7 @@ import torch
 import pandas as pd
 
 from torch.utils.data import Dataset, DataLoader
-from transformers import AutoTokenizer#T5Tokenizer
+from transformers import AutoTokenizer, DataCollatorWithPadding, DataCollatorForSeq2Seq
 from sklearn.model_selection import train_test_split
 
 import datasets
@@ -101,7 +101,9 @@ def tokenize_func(examples, tokenizer, prefix:str = 'Predict next step in the se
     inputs = [prefix+str(x) for x in examples['input']]
     labels = [x for x in examples['label']]
 
-    model_inputs = tokenizer(inputs, text_target=labels, max_length=512, truncation=True)
+    model_inputs = tokenizer(inputs, max_length=512, truncation=True, padding=True)
+    labels_ids = tokenizer(labels, max_length=512, truncation=True, padding=True)
+    model_inputs['labels'] = labels_ids['input_ids']
     return model_inputs
 
 def get_hf_ds(data_type:str = 'csv', data_files = {'train':'./yc2_captions/test.csv', 'test':'./yc2_captions/test.csv', 'validation':'./yc2_captions/val.csv'}):
@@ -116,42 +118,36 @@ def tokenize_ds(dataset, tokenizer, deep_copy:bool=False):
     
     for key in dataset.keys():
         dataset[key] = dataset[key].map(preproc_func, batched=True, remove_columns=dataset[key].column_names)
+        dataset[key].set_format('torch')
     
     return dataset
     
+def get_hf_dataLoaders(ds,  collator, train_batch:int = 64, val_batch:int = 64, test_batch:int = 64):
+    train_loader = DataLoader(ds['train'], shuffle=True, batch_size=train_batch, collate_fn=collator)
+    val_loader = DataLoader(ds['validation'], shuffle=True, batch_size=val_batch, collate_fn=collator)
+    test_loader = DataLoader(ds['test'], shuffle=True, batch_size=test_batch, collate_fn=collator)
 
+    return train_loader, val_loader, test_loader
 
 
 
 
 if __name__ == "__main__":
-    print(torch.rand(2, 3))
+    ds = get_hf_ds()
+    tokenizer = AutoTokenizer.from_pretrained('google/flan-t5-small')
 
-    idx = [0, 5, 6, 7, 10, 123, 567, 949]
+    tokenized_ds = tokenize_ds(ds, tokenizer, deep_copy=True)
 
-    df = pd.read_csv('./trainVal_samples.csv')
-    tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-    # print(len(df.iloc[idx,:]))
-    # sub = df.iloc[idx,:]
-    # print(df.iloc[idx,:])
-    # print(list(sub['input']))
+    print(tokenized_ds['train'][0])
 
-    #print(['Tester: '+x for x in sub['input']])
+    collator = DataCollatorForSeq2Seq(tokenizer=tokenizer)
 
+    train_loader, val_loader, test_loader = get_hf_dataLoaders(tokenized_ds, collator=collator)
 
-
-
-    trainloader, valloader, testloader = get_loaders(tokenizer, 'Tester: ', True, df, train_split=0.6, train_batch=64,
-                                                    val_split=0.2, val_batch=64, test_split=0.2, test_batch=64)
-
-
-
-
-
-    for data in trainloader():
-        print(len(data[0]))
-        print(data)
+    for batch in train_loader:
         break
+
+    print({k: v.shape for k, v in batch.items()})
 
 
 
