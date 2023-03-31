@@ -26,7 +26,7 @@ def save_checkpoint(checkpt_name:str,  model:nn.Module):
     model.save_pretrained('./checkpoints/'+checkpt_name)
 
 
-def train_model(optimizer, trainloader:LoaderWrapper, valloader:LoaderWrapper, model:nn.Module, epochs:int = 50, scheduler = None, device = 'cpu', tb_comment = ""):
+def train_model(optimizer, trainloader:LoaderWrapper, valloader:LoaderWrapper, model:nn.Module, epochs:int = 50, scheduler = None, device = 'cpu', tb_comment = "", checkpt_freq=10):
     running_loss = 0.0
     writer = SummaryWriter(comment=tb_comment)
     for epoch in range(epochs):
@@ -64,7 +64,7 @@ def train_model(optimizer, trainloader:LoaderWrapper, valloader:LoaderWrapper, m
         writer.add_scalar("Train/Loss", running_loss/(i+1), epoch)
 
 
-        if (epoch + 1) % 5 == 0:
+        if (epoch + 1) % checkpt_freq == 0:
             save_checkpoint(checkpt_name='checkpt_epoch_'+str(epoch+1), model=model)
 
         if scheduler is not None:
@@ -129,7 +129,7 @@ def test_model(model, testloader, transformer_model:bool = False,  device = 'cpu
     print(report)
 
 
-def train_model_hf(optimizer, trainloader:LoaderWrapper, valloader:LoaderWrapper, model:nn.Module, epochs:int = 50, scheduler = None, device = 'cpu', tb_comment = ""):
+def train_model_hf(optimizer, trainloader:LoaderWrapper, valloader:LoaderWrapper, model:nn.Module, epochs:int = 50, scheduler = None, device = 'cpu', tb_comment = "", checkpt_freq = 10):
     running_loss = 0.0
     writer = SummaryWriter(comment=tb_comment)
     for epoch in tqdm(range(epochs)):
@@ -167,7 +167,7 @@ def train_model_hf(optimizer, trainloader:LoaderWrapper, valloader:LoaderWrapper
         writer.add_scalar("Train/Loss", running_loss/(i+1), epoch)
 
 
-        if (epoch + 1) % 5 == 0:
+        if (epoch + 1) % checkpt_freq == 0:
             save_checkpoint(checkpt_name='checkpt_epoch_'+str(epoch+1), model=model)
 
         if scheduler is not None:
