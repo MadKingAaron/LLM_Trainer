@@ -67,4 +67,4 @@ def train_hf_ds(batch_size=64, epochs=100, lr=3e-8, checkpt_freq=10, tb_comment=
 
 if __name__ == "__main__":
     args = get_args()
-    train_hf_ds(batch_size=args.batch_size, epochs=args.epochs, lr=args.float, checkpt_freq=args.checkpt_freq, tb_comment=args.tb_comment)
+    train_hf_ds(batch_size=args.batch_size, epochs=args.epochs, lr=args.lr, checkpt_freq=args.checkpt_freq, tb_comment=args.tb_comment)
