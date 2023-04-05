@@ -130,3 +130,9 @@ dmypy.json
 
 # Ignore tensorboard
 runs/
+
+#Ignore Checkpoints
+checkpoints/
+
+#Ignore model
+flan-t5-small-trained/
