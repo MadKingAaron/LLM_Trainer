@@ -16,8 +16,13 @@ from CaptionDataset import LoaderWrapper
 
 
 
-def get_optimzer(initial_lr:float, model:nn.Module):
-    optimizer = optim.Adam(params=model.parameters(), lr=initial_lr)
+def get_optimzer(initial_lr:float, model:nn.Module, adamw:bool = False):
+    if adamw:
+        optimizer = optim.AdamW(params=model.parameters(), lr=initial_lr)
+    else:
+        optimizer = optim.Adam(params=model.parameters(), lr=initial_lr)
+
+
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer=optimizer)
 
     return optimizer, scheduler
