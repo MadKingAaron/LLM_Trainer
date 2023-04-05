@@ -98,9 +98,10 @@ def get_loaders(tokenizer, task_prefix:str, prepend_prefix:bool, df:pd.DataFrame
 
 
 def tokenize_func(examples, tokenizer, prefix:str = 'Predict next step in the sequence for the recipe:\n'):
-    inputs = ['Given the recipe is '+str(x[1])+'. '+prefix+str(x[0]) 
+    ending = ' </s>'
+    inputs = ['Given the recipe is '+str(x[1])+'. '+prefix+str(x[0])+ending 
               for x in zip(examples['input'], examples['recipe_type'])]
-    labels = [x for x in examples['label']]
+    labels = [x+ending for x in examples['label']]
 
     model_inputs = tokenizer(inputs, max_length=512, truncation=True, padding=True)
     labels_ids = tokenizer(labels, max_length=512, truncation=True, padding=True)
