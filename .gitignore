@@ -136,3 +136,4 @@ checkpoints/
 
 #Ignore model
 flan-t5-small-trained/
+cuda_dev_test.py

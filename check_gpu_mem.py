@@ -35,6 +35,17 @@ def get_best_free_gpu(gpus:int):
     return best_gpu
     
 
+def get_top_n_devices(gpus:int = 8, n:int = 2):
+    gpu_lst = []
+    
+    for i in range(gpus):
+        h = nvmlDeviceGetHandleByIndex(i)
+        info = nvmlDeviceGetMemoryInfo(h)
+        gpu_lst.append((i, info.free))
+    
+    gpu_lst.sort(key = lambda x: x[1])
+
+    return [gpu[0] for gpu in gpu_lst[-n:]]
 
 if __name__ == '__main__':
     for i in range(8):
@@ -42,6 +53,8 @@ if __name__ == '__main__':
         print('\n\n')
 
     print("Best GPU:", get_best_free_gpu(8))
+
+    print(get_top_n_devices(gpus=8, n=3))
 
 
     #print(convert_size(51050315776))

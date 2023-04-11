@@ -21,7 +21,7 @@ def get_optimzer(initial_lr:float, model:nn.Module):
 def save_checkpoint(checkpt_name:str,  model:nn.Module):
     model.save_pretrained('./checkpoints/'+checkpt_name)
 
-def train_model(optimizer, accelerator:Accelerator, trainloader:LoaderWrapper, valloader:LoaderWrapper, model:nn.Module, epochs:int = 50, scheduler = None, device = 'cpu', tb_comment = ""):
+def train_model(optimizer, accelerator:Accelerator, trainloader:LoaderWrapper, valloader:LoaderWrapper, model:nn.Module, epochs:int = 50, scheduler = None, device = 'cpu', tb_comment = "", checkpt_freq=10):
     running_loss = 0.0
     writer = SummaryWriter(comment=tb_comment)
     for epoch in tqdm(range(epochs)):
@@ -53,11 +53,13 @@ def train_model(optimizer, accelerator:Accelerator, trainloader:LoaderWrapper, v
         
         # Get validation accuracy and loss
         #print(labels.shape)
-        val_loss = validate_model(model, valloader, device)
-        writer.add_scalar("Val/Loss", val_loss, epoch)
-        writer.add_scalar("Train/Loss", running_loss/(i+1), epoch)
+        avg_val_loss, val_loss = validate_model(model, valloader, device)
+        writer.add_scalar("Val/AvgLoss", avg_val_loss, epoch)
+        writer.add_scalar("Val/RunningLoss", val_loss, epoch)
+        writer.add_scalar("Train/AvgLoss", running_loss/(i+1), epoch)
+        writer.add_scalar("Train/RunningLoss", running_loss, epoch)
 
-        if (epoch+1) % 5 == 0:
+        if (epoch+1) % checkpt_freq == 0:
             save_checkpoint(checkpt_name='checkpt_epoch_'+str(epoch+1), model=model)
 
 
@@ -84,7 +86,7 @@ def validate_model(model, valloader:LoaderWrapper, device = 'cpu'):
             loss = outputs.loss
             total_loss += loss.item()
 
-    return (total_loss/i)
+    return (total_loss/i), total_loss
 
 def test_model(model, testloader, transformer_model:bool = False,  device = 'cpu'):
     #model.eval()

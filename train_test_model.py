@@ -161,15 +161,17 @@ def train_model_hf(optimizer, trainloader:LoaderWrapper, valloader:LoaderWrapper
 
             # Print current stats
             running_loss += loss.item()
-            if i % 2000 == 1999:    # print every 2000 mini-batches
-                print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
-                running_loss = 0.0
+            # if i % 2000 == 1999:    # print every 2000 mini-batches
+            #     print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
+            #     running_loss = 0.0
         
         # Get validation accuracy and loss
         #print(labels.shape)
-        val_loss = validate_model_hf(model, valloader, device)
-        writer.add_scalar("Val/Loss", val_loss, epoch)
-        writer.add_scalar("Train/Loss", running_loss/(i+1), epoch)
+        avg_val_loss, val_loss = validate_model_hf(model, valloader, device)
+        writer.add_scalar("Val/AvgLoss", avg_val_loss, epoch)
+        writer.add_scalar("Val/RunningLoss", val_loss, epoch)
+        writer.add_scalar("Train/AvgLoss", running_loss/(i+1), epoch)
+        writer.add_scalar("Train/RunningLoss", running_loss, epoch)
 
 
         if (epoch + 1) % checkpt_freq == 0:
@@ -201,4 +203,4 @@ def validate_model_hf(model, valloader:LoaderWrapper, device = 'cpu'):
             loss = outputs.loss
             total_loss += loss.item()
 
-    return (total_loss/i)
+    return (total_loss/i), total_loss
