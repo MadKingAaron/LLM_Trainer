@@ -5,8 +5,10 @@ import pandas as pd
 from torch.utils.data import Dataset, DataLoader
 from transformers import AutoTokenizer, DataCollatorWithPadding, DataCollatorForSeq2Seq
 from sklearn.model_selection import train_test_split
+from random import sample
 
 import datasets
+import itertools
 
 
 class CaptionDataset(Dataset):
@@ -108,12 +110,38 @@ def tokenize_func(examples, tokenizer, prefix:str = 'Predict next step in the se
     model_inputs['labels'] = labels_ids['input_ids']
     return model_inputs
 
-def get_hf_ds(data_type:str = 'csv', data_files = {'train':'./yc2_captions/test.csv', 'test':'./yc2_captions/test.csv', 'validation':'./yc2_captions/val.csv'}):
-    dataset = datasets.load_dataset('csv', data_files=data_files)
+
+
+
+def downsample(lst:list, sample_idx:list)->list:
+    one_hot_enc = [0] * len(lst)
+    for idx in sample_idx:
+        one_hot_enc[idx] = 1
+
+    downsampled_lst = list(itertools.compress(lst, one_hot_enc))
+    return downsampled_lst
+
+def downsample_dataset(dataset:dict, downsample_num:float=1.0):
+    for set_key in dataset.keys():
+        keys = tuple(dataset[set_key].features.keys())
+        set_size = len(dataset[set_key][keys[0]])
+        sample_idx = list(sample(range(set_size), int(set_size * downsample_num)))
+        for key in keys:
+            dataset[set_key][key] = downsample(dataset[set_key][key], sample_idx)
+    
     return dataset
 
-def tokenize_ds(dataset, tokenizer, deep_copy:bool=False):
-    preproc_func = lambda x: tokenize_func(x, tokenizer)
+def get_hf_ds(data_type:str = 'csv', data_files = {'train':'./yc2_captions/train.csv', 'test':'./yc2_captions/test.csv', 'validation':'./yc2_captions/val.csv'}, downsample:float = 1.0):
+    dataset = datasets.load_dataset('csv', data_files=data_files)
+
+    if downsample < 1.0:
+        dataset = downsample_dataset(dataset, downsample)
+    
+
+    return dataset
+
+def tokenize_ds(dataset, tokenizer, deep_copy:bool=False, prefix:str = 'Predict next step in the sequence for the recipe:\n'):
+    preproc_func = lambda x: tokenize_func(x, tokenizer, prefix)
     if deep_copy:
         import copy
         dataset = copy.deepcopy(dataset)
@@ -134,11 +162,15 @@ def get_hf_dataLoaders(ds,  collator, train_batch:int = 64, val_batch:int = 64, 
 
 
 if __name__ == "__main__":
-    ds = get_hf_ds()
+    ds = get_hf_ds(downsample=0.70)
+    print(ds)
+    print(ds.keys())
+    print(ds['train'].features.keys())
     tokenizer = AutoTokenizer.from_pretrained('google/flan-t5-small')
 
     tokenized_ds = tokenize_ds(ds, tokenizer, deep_copy=True)
 
+    print(tokenized_ds)
     print(tokenized_ds['train'][0])
 
     collator = DataCollatorForSeq2Seq(tokenizer=tokenizer)

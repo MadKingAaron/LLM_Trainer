@@ -1,8 +1,9 @@
 import CaptionDataset
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, DataCollatorForSeq2Seq
+from nltk.translate.bleu_score import corpus_bleu
 
 def get_model():
-    model = AutoModelForSeq2SeqLM.from_pretrained("flan-t5-small-trained")
+    model = AutoModelForSeq2SeqLM.from_pretrained("./checkpoints/checkpt_epoch_1000")
     tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-small")
 
     return model, tokenizer
@@ -13,15 +14,20 @@ def convert_labels(tensors, tokenizer):
     
     return tensors
 
+
+def get_bleu_score(inputs:list, labels:list):
+    return corpus_bleu(labels, inputs)
+
+
 def test_model(batch_size = 2):
     model, tokenizer = get_model()
     dataset = CaptionDataset.get_hf_ds()
-    tokenized_ds = CaptionDataset.tokenize_ds(dataset, tokenizer)
+    tokenized_ds = CaptionDataset.tokenize_ds(dataset, tokenizer, deep_copy=True)
     print(tokenized_ds)
     collator = DataCollatorForSeq2Seq(tokenizer=tokenizer)
     train_dataloader, val_dataloader, test_dataloader = CaptionDataset.get_hf_dataLoaders(tokenized_ds, collator, train_batch=batch_size, val_batch=batch_size, test_batch=batch_size)
      
-    for batch in train_dataloader:
+    for batch in test_dataloader:
         break
     outputs = model.generate(**batch)
     #print(outputs.logits)
@@ -33,4 +39,4 @@ def test_model(batch_size = 2):
     print(tokenizer.batch_decode(convert_labels(batch['labels'], tokenizer), skip_special_tokens=True))
 
 
-test_model()
+test_model(1)
