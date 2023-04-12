@@ -18,9 +18,10 @@ def convert_labels(tensors, tokenizer):
 
 
 def get_bleu_score(predicts:list, labels:list):
-    return corpus_bleu(labels, predicts)
+    labels_formatted = [[x] for x in labels]
+    return corpus_bleu(labels_formatted, predicts)
 
-def calculate_score(batch_size = 2):
+def calculate_score(batch_size = 2, score_function = get_bleu_score):
     model, tokenizer = get_model()
     dataset = CaptionDataset.get_hf_ds()
     tokenized_ds = CaptionDataset.tokenize_ds(dataset, tokenizer, deep_copy=True)
@@ -42,7 +43,7 @@ def calculate_score(batch_size = 2):
         labels_lst.extend(labels)
         predicts_lst.extend(predicts)
     
-
+    return score_function(predicts_lst, labels_lst)
 
         
 
@@ -67,4 +68,4 @@ def test_model(batch_size = 2):
 
 
 #test_model(1)
-calculate_score(16)
+print(calculate_score(32))
