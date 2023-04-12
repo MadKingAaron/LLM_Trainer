@@ -140,3 +140,5 @@ cuda_dev_test.py
 yc2_captions/test_masked.csv
 yc2_captions/train_masked.csv
 yc2_captions/val_masked.csv
+labels.pkl
+preds.pkl

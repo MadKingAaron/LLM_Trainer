@@ -1,6 +1,8 @@
 import CaptionDataset
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, DataCollatorForSeq2Seq
 from nltk.translate.bleu_score import corpus_bleu
+import evaluate
+import pickle
 
 from tqdm import tqdm
 
@@ -20,6 +22,22 @@ def convert_labels(tensors, tokenizer):
 def get_bleu_score(predicts:list, labels:list):
     labels_formatted = [[x] for x in labels]
     return corpus_bleu(labels_formatted, predicts)
+
+def get_meteor_score(predicts:list, labels:list):
+    meteor = evaluate.load('meteor')
+    labels_formatted = [[x] for x in labels]
+    
+    results = meteor.compute(predictions=predicts, references=labels_formatted)
+    return results['meteor']
+
+def get_rouge_L_score(predicts:list, labels:list):
+    rouge = evaluate.load('rouge')
+    labels_formatted = [[x] for x in labels]
+
+    results = rouge.compute(predictions=predicts, references=labels_formatted)
+    return results['rougeL']
+
+
 
 def calculate_score(batch_size = 2, score_function = get_bleu_score):
     model, tokenizer = get_model()
@@ -43,7 +61,7 @@ def calculate_score(batch_size = 2, score_function = get_bleu_score):
         labels_lst.extend(labels)
         predicts_lst.extend(predicts)
     
-    return score_function(predicts_lst, labels_lst)
+    return predicts_lst, labels_lst#score_function(predicts_lst, labels_lst)
 
         
 
@@ -67,5 +85,23 @@ def test_model(batch_size = 2):
     print(tokenizer.batch_decode(convert_labels(batch['labels'], tokenizer), skip_special_tokens=True))
 
 
-#test_model(1)
-print(calculate_score(32))
+if __name__ == '__main__':
+    #test_model(1)
+    #preds, labels = calculate_score(32)
+    # with open('preds.pkl', 'wb') as f:
+    #    pickle.dump(preds, f)
+    # with open('labels.pkl', 'wb') as f:
+    #    pickle.dump(labels, f)
+    dataset = CaptionDataset.get_hf_ds()
+    print(dataset)
+    with open('preds.pkl', 'rb') as f:
+        preds = pickle.load(f)
+    with open('labels.pkl', 'rb') as file:
+        labels = pickle.load(file)
+    print(len(preds), len(labels))
+    print(get_bleu_score(preds, labels))
+    print(get_meteor_score(preds, labels))
+    print(get_rouge_L_score(preds, labels))
+    
+
+
