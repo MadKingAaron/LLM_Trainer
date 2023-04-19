@@ -142,3 +142,7 @@ yc2_captions/train_masked.csv
 yc2_captions/val_masked.csv
 labels.pkl
 preds.pkl
+gpt_prompts/
+tester.py
+prompt.txt
+
