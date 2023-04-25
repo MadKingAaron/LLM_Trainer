@@ -48,6 +48,7 @@ def get_best_device(num_devices:int=8):
     return best_dev
 
 def train_hf_ds(batch_size=64, epochs=100, lr=3e-8, checkpt_freq=10, tb_comment='', adamw = False):
+    datafiles = {'train':'./yc2_captions/train_new_split.csv', 'test':'./yc2_captions/test_new_split.csv', 'validation':'./yc2_captions/val_new_split.csv'}
     model, tokenizer = get_model()
 
     device = check_gpu_mem.get_best_free_gpu(8)
@@ -57,7 +58,7 @@ def train_hf_ds(batch_size=64, epochs=100, lr=3e-8, checkpt_freq=10, tb_comment=
     
     optimizer, lr_scheduler = train_test_model.get_optimzer(initial_lr=lr, model=model, adamw=adamw)
 
-    dataset = CaptionDataset.get_hf_ds()#(data_files = {'train':'./yc2_captions/train_masked.csv', 'test':'./yc2_captions/test_masked.csv', 'validation':'./yc2_captions/val_masked.csv'})
+    dataset = CaptionDataset.get_hf_ds(data_files=datafiles)#(data_files = {'train':'./yc2_captions/train_masked.csv', 'test':'./yc2_captions/test_masked.csv', 'validation':'./yc2_captions/val_masked.csv'})
     
     print(dataset)
     

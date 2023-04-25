@@ -131,12 +131,8 @@ def downsample_dataset(dataset:dict, downsample_num:float=1.0):
     
     return dataset
 
-def get_hf_ds(data_type:str = 'csv', data_files = {'train':'./yc2_captions/train.csv', 'test':'./yc2_captions/test.csv', 'validation':'./yc2_captions/val.csv'}, downsample:float = 1.0):
+def get_hf_ds(data_type:str = 'csv', data_files = {'train':'./yc2_captions/train.csv', 'test':'./yc2_captions/test.csv', 'validation':'./yc2_captions/val.csv'}):
     dataset = datasets.load_dataset('csv', data_files=data_files)
-
-    if downsample < 1.0:
-        dataset = downsample_dataset(dataset, downsample)
-    
 
     return dataset
 
@@ -162,7 +158,7 @@ def get_hf_dataLoaders(ds,  collator, train_batch:int = 64, val_batch:int = 64, 
 
 
 if __name__ == "__main__":
-    ds = get_hf_ds(downsample=0.70)
+    ds = get_hf_ds()
     print(ds)
     print(ds.keys())
     print(ds['train'].features.keys())
