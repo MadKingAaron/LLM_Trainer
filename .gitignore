@@ -146,3 +146,22 @@ gpt_prompts/
 tester.py
 prompt.txt
 
+flan-t5-small-trained-2/config.json
+flan-t5-small-trained-2/generation_config.json
+flan-t5-small-trained-2/pytorch_model.bin
+models/models--bigscience--T0_3B/.no_exist/8794c7177e3a67b8a0ec739d94eecfa6a591c974/added_tokens.json
+models/models--bigscience--T0_3B/.no_exist/8794c7177e3a67b8a0ec739d94eecfa6a591c974/generation_config.json
+models/models--bigscience--T0_3B/.no_exist/8794c7177e3a67b8a0ec739d94eecfa6a591c974/tokenizer.json
+models/models--bigscience--T0_3B/blobs/5cfdc30b641bf2fc36e97e18b0bfc56b9812370b
+models/models--bigscience--T0_3B/blobs/881bdbffc06e471924ecea57f962bc5f8e2a9f21
+models/models--bigscience--T0_3B/blobs/b4f755a1a41fd8569591096804d207a1d58f1e893b9175d4fa8d626fb5cec036
+models/models--bigscience--T0_3B/blobs/d60acb128cf7b7f2536e8f38a5b18a05535c9e14c7a355904270e15b0945ea86
+models/models--bigscience--T0_3B/blobs/b114c318caf72f6e89ea92e0755c41327a453198
+models/models--bigscience--T0_3B/refs/main
+models/models--bigscience--T0_3B/snapshots/8794c7177e3a67b8a0ec739d94eecfa6a591c974/config.json
+models/models--bigscience--T0_3B/snapshots/8794c7177e3a67b8a0ec739d94eecfa6a591c974/pytorch_model.bin
+models/models--bigscience--T0_3B/snapshots/8794c7177e3a67b8a0ec739d94eecfa6a591c974/special_tokens_map.json
+models/models--bigscience--T0_3B/snapshots/8794c7177e3a67b8a0ec739d94eecfa6a591c974/spiece.model
+models/models--bigscience--T0_3B/snapshots/8794c7177e3a67b8a0ec739d94eecfa6a591c974/tokenizer_config.json
+
+*.csv
